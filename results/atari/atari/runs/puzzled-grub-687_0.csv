@@ -1,3 +1,0 @@
-train_steps,agent_steps,return,env_steps,env,run
-2000,29310.4,-20.4,117241.5,atari_pong,puzzled-grub-687_0
-4000,89173.0,-20.9,356692.0,atari_pong,puzzled-grub-687_0

@@ -1,2 +1,0 @@
-train_steps,agent_steps,return,env_steps,env,run
-2000,26935.4,0.2,107741.6,minigrid_empty_8x8_v0,charming-mule-582_0
