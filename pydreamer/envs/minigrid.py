@@ -7,11 +7,11 @@ import gym_minigrid.envs
 import gym_minigrid.minigrid
 from gym_minigrid.minigrid import COLOR_TO_IDX, OBJECT_TO_IDX
 import numpy as np
-
+from PIL import Image
 
 class MiniGrid(gym.Env):
 
-    GRID_VALUES = np.array([  # shape=(33,3)
+    GRID_VALUES = np.array([  # shape=(38,3)
         [0, 0, 0],  # Invisible
         [1, 0, 0],  # Empty
         [2, 5, 0],  # Wall
@@ -59,7 +59,8 @@ class MiniGrid(gym.Env):
 
     def __init__(self, env_name, max_steps=500, seed=None, agent_init_pos=None, agent_init_dir=0):
         env = gym.make(env_name)
-        assert isinstance(env, gym_minigrid.envs.MiniGridEnv)
+        print(f"GRID VALUES :{MiniGrid.GRID_VALUES.shape}")
+        # assert isinstance(env, gym_minigrid.envs.MiniGridEnv)
         self.env = env
         self.env.max_steps = max_steps
         if seed:
@@ -92,6 +93,8 @@ class MiniGrid(gym.Env):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
+        obsa = self.observation(obs)
+        MiniGrid.render_map(obsa["map"])        #newly added
         return self.observation(obs), reward, done, info
 
     def reset(self):
@@ -200,9 +203,13 @@ class MiniGrid(gym.Env):
     @staticmethod
     def render_map(map_, tile_size=16):
         map_ = MiniGrid.from_categorical(map_)
-
+        print("MAPO")
+        print(map_.shape)
+        print(type(map_))
         # Find and remove special "agent" object
         agent_pos, agent_dir = None, None
+        print("HERE")
+        print((map_[:, :, 0] == OBJECT_TO_IDX['agent']).nonzero())
         x, y = (map_[:, :, 0] == OBJECT_TO_IDX['agent']).nonzero()
         if len(x) > 0:
             x, y = x[0], y[0]
@@ -212,6 +219,11 @@ class MiniGrid(gym.Env):
 
         grid, vis_mask = gym_minigrid.minigrid.Grid.decode(map_)
         img = grid.render(tile_size, agent_pos=agent_pos, agent_dir=agent_dir, highlight_mask=~vis_mask)
+        print("RENDER MAP")
+        print(img.shape)
+        print(type(img))
+        im = Image.fromarray(img)
+        im.save("../first_image.jpeg")
         return img
 
     def close(self):
