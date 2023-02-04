@@ -121,14 +121,14 @@ defaults:
 
 minigrid:
   env_id: MiniGrid-MazeS11N-v0
-  # Features
+  # Features image channels was 4 map channels was 4
   image_key: image
   image_size: 7
-  image_channels: 4
+  image_channels: 38
   image_categorical: True
   map_key: map
   map_size: 11
-  map_channels: 4
+  map_channels: 38
   map_categorical: True
   action_dim: 7
   reward_input: True
@@ -190,6 +190,21 @@ atari:
   # Env
   env_id: Atari-Pong
   action_dim: 18
+  env_action_repeat: 4
+  env_time_limit: 27_000  # =108_000/action_repeat = 30 minutes of game play.
+  generator_workers: 1
+  clip_rewards: tanh
+  # Model
+  deter_dim: 1024
+  kl_weight: 0.1
+  gamma: 0.99
+  entropy: 0.001
+#new
+sokoban:
+  n_env_steps: 200_000_000
+  # Env
+  env_id: Sokoban-v0
+  action_dim: 9
   env_action_repeat: 4
   env_time_limit: 27_000  # =108_000/action_repeat = 30 minutes of game play.
   generator_workers: 1

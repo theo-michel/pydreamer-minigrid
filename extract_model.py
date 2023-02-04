@@ -120,9 +120,11 @@ evaluate('test', steps, model, test_iter, device, conf.test_batches, conf.iwae_s
 ## Make it play in the gym
 
 
-## 
-
-
+## Play with the dreams 
+#World Model.forward 
+#then Modify the variables in input 
+#See difference in output
+#Find cool way to visualize
 """ MlFlow tries
 
 # loaded_model = mlflow.pyfunc.load_model(f"runs:/{run_id}/model")
