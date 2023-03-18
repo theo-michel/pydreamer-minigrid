@@ -106,7 +106,7 @@ def run(conf):
     else:
         model: Dreamer = WorldModelProbe(conf)  # type: ignore
     model.to(device)
-    print(model)
+    # print(model)
     # print(repr(model))
     mlflow_log_text(repr(model), 'architecture.txt')
 
@@ -168,6 +168,7 @@ def run(conf):
                         state = states.get(wid)
                         if state is None:
                             state = model.init_state(conf.batch_size * conf.iwae_samples)
+                        print("OBS ACTION SHAPE", obs["action"].shape)
                         losses, new_state, loss_metrics, tensors, dream_tensors = \
                             model.training_step(
                                 obs,
@@ -216,8 +217,10 @@ def run(conf):
                     # Log sample
 
                     if will_log_batch:
+                        # print("d2_wm_closed")
                         log_batch_npz(batch, tensors, f'{steps:07}.npz', subdir='d2_wm_closed')
                     if dream_tensors:
+                        # print("d2_wm_dream")
                         log_batch_npz(batch, dream_tensors, f'{steps:07}.npz', subdir='d2_wm_dream')
 
                     # Log data buffer size
@@ -383,7 +386,14 @@ def evaluate(prefix: str,
                                         iwae_samples=eval_samples,
                                         imag_horizon=conf.imag_horizon,
                                         do_image_pred=True)
-
+                # print("Tensor format")
+                # print(tensors.keys())
+                # print(tensors["image_pred"].shape)
+                # print(torch.max(tensors["image_pred"]))
+                # print(tensors["image_pred"])
+                # img = Image.fromarray(image)
+                # img.save('test_convert.png')
+                # print("ENDE")
                 for k, v in loss_metrics.items():
                     if not np.isnan(v.item()):
                         metrics_eval[k].append(v.item())
@@ -421,7 +431,6 @@ def log_batch_npz(batch: Dict[str, Tensor],
 
 
 def prepare_batch_npz(data: Dict[str, Tensor], take_b=999):
-
     def unpreprocess(key: str, val: Tensor) -> np.ndarray:
         if take_b < val.shape[1]:
             val = val[:, :take_b]
@@ -445,7 +454,15 @@ def prepare_batch_npz(data: Dict[str, Tensor], take_b=999):
 
             if x.shape[-1] == x.shape[-2]:  # (T,B,C,W,W)
                 x = x.transpose(0, 1, 3, 4, 2)  # => (T,B,W,W,C)
-            assert x.shape[-2] == x.shape[-3], 'Assuming rectangular images, otherwise need to improve logic'
+            # if  x.shape[-2] != x.shape[-3]:
+                # #If the image is not square fill in with zeros # added by theo-michel
+                # if x.shape[-2] >  x.shape[-3]:
+                #     n_pad = generate_tuple_of_tuples(len(x.shape)-3,0)+((0,x.shape[-2]-x.shape[-3]),(0,0),(0,0))
+                #     x = np.pad(x,n_pad,'constant', constant_values=(0, 0))
+                # if x.shape[-2] <  x.shape[-3]:
+                #     n_pad = generate_tuple_of_tuples(len(x.shape)-2,0)+((0,x.shape[-3]-x.shape[-2]),(0,0))
+                #     x = np.pad(x,n_pad,'constant', constant_values=(0, 0))
+            assert x.shape[-2] == x.shape[-3], 'Assuming square images, otherwise need to improve logic'#Dont need this anymore
 
             if x.shape[-1] in [1, 3]:
                 # RGB or grayscale
@@ -463,6 +480,9 @@ def prepare_batch_npz(data: Dict[str, Tensor], take_b=999):
         return x
 
     return {k: unpreprocess(k, v) for k, v in data.items()}
+def generate_tuple_of_tuples(len,value):
+    return tuple((value,value) for i in range(len))
+
 
 
 def get_profiler(conf):

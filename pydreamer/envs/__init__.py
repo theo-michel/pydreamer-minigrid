@@ -57,6 +57,12 @@ def create_env(env_id: str, no_terminal: bool, env_time_limit: int, env_action_r
         task = env_id.split('-', maxsplit=1)[1].lower()
         env = EmbodiedEnv(task, action_repeat=env_action_repeat, time_limit=env_time_limit)
         env_time_limit = 0  # This is handled by embodied.Env
+    #new
+    elif env_id.startswith('Sokoban'):
+        from .sokoban import Sokoban
+        print("env id")
+        env = Sokoban(env_id)
+        print("env end")
 
     else:
         env = gym.make(env_id)

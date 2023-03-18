@@ -9,6 +9,9 @@ import os
 import json
 import mlflow
 from torchsummary import summary
+import pickle
+from PIL import Image
+import numpy as np
 
 
 def get_worker_info():
@@ -34,6 +37,9 @@ configure_logging('[launcher]')
 parser = argparse.ArgumentParser()
 parser.add_argument('--configs', nargs='+', required=True)
 args, remaining = parser.parse_known_args()
+print("args you passed in")
+print(args)
+print(remaining)
 
 # Config from YAML
 
@@ -76,14 +82,15 @@ optimizers=tuple()
 map_location=None#Same place that it is loaded from
 # PONG '/home/theomichel/work/pyDreamer/pydreamer/mlruns/0/a4efeae409604aa4a0f8455488dae462/artifacts/checkpoints/latest.pt'
 # MINIGRID '/home/theomichel/work/pyDreamer/pydreamer/mlruns/0/342ccaea0b0b4812929cb5433bac3510/artifacts/checkpoints/latest.pt'
-checkpoint = torch.load('/home/theomichel/work/pyDreamer/pydreamer/mlruns/0/342ccaea0b0b4812929cb5433bac3510/artifacts/checkpoints/latest.pt', map_location=map_location)
+# Adventure 
+# path = "/home/theomichel/work/pyDreamer/pydreamer-minigrid/results/baselines/atari/mlruns/0/261d3a26b2b842ec990a8d0a5d6111ac/artifacts/checkpoints/latest.pt"
+# Alien  "/home/theomichel/work/pyDreamer/pydreamer-minigrid/mlruns/0/c1a7c69b35fa4570915c6be36f57f2c9/artifacts/checkpoints/latest.pt"
+path = "/home/theomichel/work/pyDreamer/pydreamer-minigrid/mlruns/0/c1a7c69b35fa4570915c6be36f57f2c9/artifacts/checkpoints/latest.pt"
+checkpoint = torch.load(path, map_location=map_location)
 model.load_state_dict(checkpoint['model_state_dict'])
 for i, opt in enumerate(optimizers):
     opt.load_state_dict(checkpoint[f'optimizer_{i}_state_dict'])
     checkpoint['epoch']
-
-print('Model HEYO')
-print(model)
 
 
 ## Evaluate the model
@@ -110,21 +117,82 @@ steps = 10
 model.to(device)#Important
 # MINIGRID 'file:///home/theomichel/work/pyDreamer/pydreamer/mlruns/0/342ccaea0b0b4812929cb5433bac3510/artifacts/episodes_eval/0'
 # PONG 'file:///home/theomichel/work/pyDreamer/pydreamer/mlruns/0/afc956ebbaa447008da84d7486c0c05a/artifacts/episodes_eval/0'
-eval_dirs =['file:///home/theomichel/work/pyDreamer/pydreamer/mlruns/0/342ccaea0b0b4812929cb5433bac3510/artifacts/episodes_eval/0']
+# ADVENTURE
+# eval_dirs =['file:///home/theomichel/work/pyDreamer/pydreamer/mlruns/0/342ccaea0b0b4812929cb5433bac3510/artifacts/episodes_eval/0']
+# ALIEN
+eval_dirs = ['file:///home/theomichel/work/pyDreamer/pydreamer-minigrid/mlruns/0/c1a7c69b35fa4570915c6be36f57f2c9/artifacts/episodes_eval/0']
+
 test_dirs = eval_dirs
 data_test = DataSequential(MlflowEpisodeRepository(test_dirs), conf.batch_length, conf.test_batch_size, skip_first=False, reset_interval=conf.reset_interval)
 print("Test Data")
 print(data_test)
 test_iter = iter(DataLoader(preprocess(data_test), batch_size=None))
-evaluate('test', steps, model, test_iter, device, conf.test_batches, conf.iwae_samples, conf.keep_state, conf.test_save_size, conf)
+#Here we launch an evaluation which will launch a training step and so save a model
+evaluate('test', steps, model, test_iter, device, conf.test_batches, conf.iwae_samples, conf.keep_state, conf.test_save_size, conf) 
+
 ## Make it play in the gym
 
-
+##TODO
 ## Play with the dreams 
 #World Model.forward 
 #then Modify the variables in input 
 #See difference in output
 #Find cool way to visualize
+########################################### MODEL INFERENCE ###########################################
+# exit()
+# for state old
+# with open('in_state_alien.pkl','rb') as f:
+#     in_state = pickle.load(f)
+# with open('obs_alien.pkl','rb') as f:
+#     obs = pickle.load(f)
+# For state that we extracted from inference
+with open('in_state_alien_inf.pkl','rb') as f:
+    in_state = pickle.load(f)
+with open('obs_alien_inf.pkl','rb') as f:
+    obs = pickle.load(f)
+
+# print("In state")
+# print(print(in_state))
+# print("obs")
+# print(type(obs))
+for key in obs:
+    obs[key] = obs[key].to(device)
+
+in_state_new = (in_state[0].to(device),in_state[1].to(device))
+
+#put data on gpu
+# in_state = in_state.to(device)
+#Forward is just used when the model is translating the world into features for the policy to take a decision
+# features, out_state = model.wm.forward(obs,in_state_new)
+print("obs")
+print(obs.keys())
+print(in_state_new)#(h,z) with h the forwarded state by the RSSM and z containing the latent variables
+#Training step does all evem the image prediction
+
+loss, features, states, out_state, metrics, tensors = model.wm.training_step(obs,in_state_new,do_image_pred=True)
+print("tensors")
+print(tensors.keys())
+print(tensors['image_pred'].shape)
+image_cpu = tensors['image_pred'].cpu().numpy()
+image = image_cpu[0,0,:,:,:].transpose(1,2,0)
+print("imshape")
+print(image.shape)
+print("min max")
+print(np.min(image))
+print(np.max(image))
+ar = (image+0.5)* 255
+print(np.min(ar))
+print(np.max(ar))
+image_final = ar.astype(np.uint8)
+img_rgb = image_final#[...,::-1]
+im = Image.fromarray(img_rgb)
+im.save("predicted_dream_alien_2.jpeg")
+
+
+
+
+
+
 """ MlFlow tries
 
 # loaded_model = mlflow.pyfunc.load_model(f"runs:/{run_id}/model")

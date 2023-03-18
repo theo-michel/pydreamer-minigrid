@@ -1,3 +1,4 @@
+import random
 from typing import Any, Tuple
 
 import torch
@@ -14,6 +15,9 @@ from .decoders import *
 from .rnn import *
 from .rssm import *
 from .probes import *
+
+#New 
+import pickle
 
 
 class Dreamer(nn.Module):
@@ -97,7 +101,7 @@ class Dreamer(nn.Module):
         act_shape = obs['action'].shape
         assert len(act_shape) == 3 and act_shape[0] == 1, f'Expected shape (1,B,A), got {act_shape}'
 
-        # Forward (world model)
+
 
         features, out_state = self.wm.forward(obs, in_state)
 
@@ -123,10 +127,25 @@ class Dreamer(nn.Module):
         assert 'reward' in obs, '`reward` required in observation'
         assert 'reset' in obs, '`reset` required in observation'
         assert 'terminal' in obs, '`terminal` required in observation'
+
         iwae_samples = int(iwae_samples or self.iwae_samples)
         imag_horizon = int(imag_horizon or self.imag_horizon)
         T, B = obs['action'].shape[:2]
         I, H = iwae_samples, imag_horizon
+
+        # Intercepting the observation and in state to be reused in extract model
+        # Forward (world model)
+        # generate random number
+        # rand = random.randint(0, 50)# It will probably overide a bunch of times but that's ok
+        ########## THE STATE IS SHIT WHEN UNTRAINED ? 
+        # with open(f'states/obs_alien_new{rand}.pkl', 'wb') as f:
+        #     pickle.dump(obs, f)
+        # with open(f'states/in_state_alien_new{rand}.pkl', 'wb') as f:
+        #     pickle.dump(in_state, f)
+        # print("SAVED OBS AND IN_STATE")
+
+
+
 
         # World model
 
@@ -150,6 +169,16 @@ class Dreamer(nn.Module):
         # Note features_dream includes the starting "real" features at features_dream[0]
         features_dream, actions_dream, rewards_dream, terminals_dream = \
             self.dream(in_state_dream, H, self.ac.actor_grad == 'dynamics')  # (H+1,TBI,D)
+
+
+
+        # # Intercepting the features_dream  to be reused in extract model###################################
+        # rand = random.randint(0, 50)# It will probably overide a bunch of times but that's ok
+        # ######### THE STATE IS SHIT WHEN UNTRAINED ? 
+        # with open(f'features_dream/feature_alien_new{rand}.pkl', 'wb') as f:
+        #     pickle.dump(features_dream, f)
+        # print("SAVED FEATURES AND IN_STATE")
+
         (loss_actor, loss_critic), metrics_ac, tensors_ac = \
             self.ac.training_step(features_dream.detach(),
                                   actions_dream.detach(),
@@ -167,8 +196,24 @@ class Dreamer(nn.Module):
                 # and here for inspection purposes we only dream from first step, so it's (H*B).
                 # Oh, and we set here H=T-1, so we get (T,B), and the dreamed experience aligns with actual.
                 in_state_dream: StateB = map_structure(states, lambda x: x.detach()[0, :, 0])  # type: ignore  # (T,B,I) => (B)
+                # print("dream")
                 features_dream, actions_dream, rewards_dream, terminals_dream = self.dream(in_state_dream, T - 1)  # H = T-1
+                # Intercepting the features_dream  to be reused in extract model###################################
+                # rand = random.randint(0, 50)# It will probably overide a bunch of times but that's ok
+                # ######### THE STATE IS SHIT WHEN UNTRAINED ? 
+                # with open(f'features_dream2/feature_alien_new{rand}.pkl', 'wb') as f:
+                #     pickle.dump(features_dream, f)
+                # print("SAVED FEATURES 2 AND IN_STATE")
+
                 image_dream = self.wm.decoder.image.forward(features_dream)
+                #save image with pil to see the image being recorded directly after
+                # img = image_dream[2,2,:,:,:].cpu().numpy().transpose(1,2,0)
+                # img = ((img + 0.5) * 255.0).clip(0, 255).astype('uint8')
+                # from PIL import Image
+                # im = Image.fromarray((img).astype(np.uint8))
+                # im.save(f"dream_intercept.png")
+
+
                 _, _, tensors_ac = self.ac.training_step(features_dream, actions_dream, rewards_dream.mean, terminals_dream.mean, log_only=True)
                 # The tensors are intentionally named same as in tensors, so the logged npz looks the same for dreamed or not
                 dream_tensors = dict(action_pred=torch.cat([obs['action'][:1], actions_dream]),  # first action is real from previous step
@@ -190,7 +235,6 @@ class Dreamer(nn.Module):
         actions = []
         state = in_state
         self.wm.requires_grad_(False)  # Prevent dynamics gradiens from affecting world model
-
         for i in range(imag_horizon):
             feature = self.wm.core.to_feature(*state)
             action_dist = self.ac.forward_actor(feature)
@@ -207,6 +251,7 @@ class Dreamer(nn.Module):
         feature = self.wm.core.to_feature(*state)
         features.append(feature)
         features = torch.stack(features)  # (H+1,TBI,D)
+        # print("actions:\n", actions)
         actions = torch.stack(actions)  # (H,TBI,A)
 
         rewards = self.wm.decoder.reward.forward(features)      # (H+1,TBI)
@@ -293,7 +338,7 @@ class WorldModel(nn.Module):
         loss, features, states, out_state, metrics, tensors = \
             self.training_step(obs, in_state, forward_only=True)
         return features, out_state
-
+        
     def training_step(self,
                       obs: Dict[str, Tensor],
                       in_state: Any,
@@ -305,6 +350,17 @@ class WorldModel(nn.Module):
         # Encoder
 
         embed = self.encoder(obs)
+
+        # Intercepting the observation and in state to be reused in extract model
+        # Forward (world model)
+        #generate random number
+        # rand = random.randint(0, 50)# It will probably overide a bunch of times but that's ok
+        ############ THE STATE IS SHIT WHEN UNTRAINED ? 
+        # with open(f'obs_alien_inf{rand}.pkl', 'wb') as f:
+        #     pickle.dump(obs, f)
+        # with open(f'in_state_alien_inf{rand}.pkl', 'wb') as f:
+        #     pickle.dump(in_state, f)
+        # print("SAVED OBS AND IN_STATE")
 
         # RSSM
 

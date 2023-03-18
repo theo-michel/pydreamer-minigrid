@@ -93,8 +93,21 @@ class MiniGrid(gym.Env):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-        obsa = self.observation(obs)
-        MiniGrid.render_map(obsa["map"])        #newly added
+
+        # print("info")
+        # print(info)
+        # obsa = self.observation(obs) #newly added
+        # print("obsa map agent")
+        # print(obsa['map_agent'])
+        # print(type(obsa['map_agent']))
+        # print(obsa['map_agent'].shape)
+        # img = MiniGrid.render_map(obsa["map_agent"])    #newly added
+        # im = Image.fromarray(img)
+        # im.save("../rendered_image.jpeg")
+
+        #doesn't work
+        # enva =  gym_minigrid.RGBImgPartialObsWrapper(self.env)
+
         return self.observation(obs), reward, done, info
 
     def reset(self):
@@ -122,9 +135,9 @@ class MiniGrid(gym.Env):
         obs['agent_pos'] = np.array(self.env.agent_pos, dtype=np.float32)
         agent_dir = int(self.env.agent_dir)  # type: ignore
         obs['agent_dir'] = np.array([[+1, 0], [0, +1], [-1, 0], [0, -1]][agent_dir], dtype=np.float32)
-
-        for k in obs:
-            assert obs[k].shape == self.observation_space[k].shape, f"Wrong shape {k}: {obs[k].shape} != {self.observation_space[k].shape}"  # type: ignore
+        #should put back in
+        # for k in obs:
+        #     assert obs[k].shape == self.observation_space[k].shape, f"Wrong shape {k}: {obs[k].shape} != {self.observation_space[k].shape}"  # type: ignore
         return obs
 
     @staticmethod
@@ -203,13 +216,8 @@ class MiniGrid(gym.Env):
     @staticmethod
     def render_map(map_, tile_size=16):
         map_ = MiniGrid.from_categorical(map_)
-        print("MAPO")
-        print(map_.shape)
-        print(type(map_))
         # Find and remove special "agent" object
         agent_pos, agent_dir = None, None
-        print("HERE")
-        print((map_[:, :, 0] == OBJECT_TO_IDX['agent']).nonzero())
         x, y = (map_[:, :, 0] == OBJECT_TO_IDX['agent']).nonzero()
         if len(x) > 0:
             x, y = x[0], y[0]
@@ -219,11 +227,6 @@ class MiniGrid(gym.Env):
 
         grid, vis_mask = gym_minigrid.minigrid.Grid.decode(map_)
         img = grid.render(tile_size, agent_pos=agent_pos, agent_dir=agent_dir, highlight_mask=~vis_mask)
-        print("RENDER MAP")
-        print(img.shape)
-        print(type(img))
-        im = Image.fromarray(img)
-        im.save("../first_image.jpeg")
         return img
 
     def close(self):

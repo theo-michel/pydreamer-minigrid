@@ -8,6 +8,8 @@ from .tools import *
 
 
 def to_onehot(x: np.ndarray, n_categories) -> np.ndarray:
+    # print("Hey")
+    # print(n_categories)
     e = np.eye(n_categories, dtype=np.float32)
     return e[x]  # Nice trick: https://stackoverflow.com/a/37323404
 
@@ -106,6 +108,8 @@ class Preprocessor:
         if self.image_key:
             batch['image'] = batch[self.image_key]  # Use something else (e.g. map_masked) as image
             if self.image_categorical:
+                # print("Heyo")
+                # print(self.image_categorical)
                 batch['image'] = img_to_onehot(batch['image'], self.image_categorical)
             else:
                 batch['image'] = to_image(batch['image'])

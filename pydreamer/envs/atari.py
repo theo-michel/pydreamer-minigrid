@@ -18,7 +18,7 @@ class Atari(gym.Env):
                  noops=30,
                  life_done=False,
                  sticky_actions=True,
-                 all_actions=True
+                 all_actions=True#changed from True
                  ):
         assert size[0] == size[1]
         with self.LOCK:

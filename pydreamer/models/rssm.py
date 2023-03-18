@@ -134,7 +134,6 @@ class RSSMCell(nn.Module):
         in_h = in_h * reset_mask
         in_z = in_z * reset_mask
         B = action.shape[0]
-
         x = self.z_mlp(in_z) + self.a_mlp(action)  # (B,H)
         x = self.in_norm(x)
         za = F.elu(x)
