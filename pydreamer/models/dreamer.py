@@ -133,6 +133,7 @@ class Dreamer(nn.Module):
         T, B = obs['action'].shape[:2]
         I, H = iwae_samples, imag_horizon
 
+        # UNCOMMENT THIS
         # Intercepting the observation and in state to be reused in extract model
         # Forward (world model)
         # generate random number

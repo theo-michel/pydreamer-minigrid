@@ -454,15 +454,16 @@ def prepare_batch_npz(data: Dict[str, Tensor], take_b=999):
 
             if x.shape[-1] == x.shape[-2]:  # (T,B,C,W,W)
                 x = x.transpose(0, 1, 3, 4, 2)  # => (T,B,W,W,C)
-            if  x.shape[-2] != x.shape[-3]:
-                #If the image is not square fill in with zeros # added by theo-michel
-                if x.shape[-2] >  x.shape[-3]:
-                    n_pad = generate_tuple_of_tuples(len(x.shape)-3,0)+((0,x.shape[-2]-x.shape[-3]),(0,0),(0,0))
-                    x = np.pad(x,n_pad,'constant', constant_values=(0, 0))
-                if x.shape[-2] <  x.shape[-3]:
-                    n_pad = generate_tuple_of_tuples(len(x.shape)-2,0)+((0,x.shape[-3]-x.shape[-2]),(0,0))
-                    x = np.pad(x,n_pad,'constant', constant_values=(0, 0))
-            # assert x.shape[-2] == x.shape[-3], 'Assuming square images, otherwise need to improve logic'#Dont need this anymore
+            # If the image is not square fill in with zeros # added by theo-michel
+            # if  x.shape[-2] != x.shape[-3]:
+            #     if x.shape[-2] >  x.shape[-3]:
+            #         n_pad = generate_tuple_of_tuples(len(x.shape)-3,0)+((0,x.shape[-2]-x.shape[-3]),(0,0),(0,0))
+            #         x = np.pad(x,n_pad,'constant', constant_values=(0, 0))
+            #     if x.shape[-2] <  x.shape[-3]:
+            #         n_pad = generate_tuple_of_tuples(len(x.shape)-2,0)+((0,x.shape[-3]-x.shape[-2]),(0,0))
+            #         x = np.pad(x,n_pad,'constant', constant_values=(0, 0))
+            #Try to Uncomment the lines above, if the following assertion is causing you problems
+            assert x.shape[-2] == x.shape[-3], 'Assuming square images, otherwise need to improve logic'
 
             if x.shape[-1] in [1, 3]:
                 # RGB or grayscale

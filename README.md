@@ -180,15 +180,39 @@ The world model extraction is not elegant and can be improved, it was left as is
 
 1. Train a DreamerV2 agent on the environment of your choice (e.g. Atari-Pong), it's latest state will be automatically saved in the mlflow server, so in the file mlruns/0/{run_id}/artifacts/checkpoints/latest.pt"
 
-2. Extract a state of this agent when playing on the environment in question, in our case we captured the state $z$. This is done by uncommenting the code line 136 of the pydreamer/models/dreamer.py. Exercute the evaluation of the model using the model-experiments.ipynb file. And then comment the line, and restart the kernel of the model-experiments.ipynb file.
+2. Extract a state of this agent when playing on the environment in question, in our case we captured the state $z$. This is done by uncommenting the code line 136 of the pydreamer/models/dreamer.py. Execute the evaluation of the model using the model-experiments.ipynb file, so that the state is saved when doing the evaluation. And then recomment the lines, and restart the kernel of the model-experiments.ipynb file.
 
-
-
-3. Use the saved checkpoint and saved state, together to predict the world model, see model-experiments.ipynb
+3. Use the saved checkpoint and saved state, so replace the states at the line 100 with your own desired states, together to predict the world model, see model-experiments.ipynb.
 
 4. Play with the states and analyse the differences.
 
+It should be noted that making this process easier is quite easy if you add arguments to the evaluation function, and then use a if statement. We didn't do it out of lake of time, and as in our case we only had to do this procedure once.
 
 
 
-### World Model analysis
+## Tested commands
+Example line of how to launch minigrid :
+python launch.py --config defaults minigrid --env_id MiniGrid-DoorKey-8x8-v0 --probe_model none
+
+Minigrid working envs :
+- Emptyenv
+- Doorkeyenv
+- Fourroomsenv
+Some of the minigrid environments are not working as there is an issue with the encoding of the objects, which has been hardcoded in the pydreamer/envs/minigrid.py file. This can be improved
+Sometimes the shape of the environment is a problem, it is assumed to be square a partial fix is to use pydreamer-minigrid/train.py/ l.458 to pad the non square envrionments, this has not been fully tested, and is a quick fix.
+
+Not Working Minigrid environments
+- Dynamicobstaclesenv
+- MiniGrid-MultiRoom-N2-S4-v0
+- MiniGrid-Unlock-v0
+
+
+Visit \href{https://minigrid.farama.org/environments/minigrid/}{link} for more detail about the minigrid envs.
+Other games that have been tested
+- python launch.py --configs defaults atari --env_id Atari-Alien-V5
+- python launch.py --configs defaults atari --env_id Atari-Breakout
+- python launch.py --configs defaults atari --env_id Atari-Pong
+- python extract_model.py --configs defaults atari --env_id Atari-Adventure-v5
+
+### World model analysis
+see model-experiments.ipynb

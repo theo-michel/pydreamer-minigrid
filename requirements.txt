@@ -20,4 +20,5 @@ google.cloud.storage
 
 #Minigrid 
 gym_minigrid==1.0.0
+# The requirements need updating
 
