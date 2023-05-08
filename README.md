@@ -167,3 +167,28 @@ That does NOT mean you need to have a Mlflow tracking server installed. By defau
 That said, if you are running experiments on the cloud, it is *very* convenient to set up a persistent Mlflow [tracking server](https://www.mlflow.org/docs/latest/tracking.html#mlflow-tracking-servers). In that case just set the `MLFLOW_TRACKING_URI` env variable, and all the metrics will be sent to the server instead of written to the local dir.
 
 Note that the replay buffer is just a directory with mlflow artifacts in `*.npz` format, so if you set up an S3 or GCS mlflow artifact store, the replay buffer will be actually stored on the cloud and replayed from there! This makes it easy to persist data across container restarts, but be careful to store data in the same cloud region as the training containers, to avoid data transfer charges.
+
+
+## World Model extraction and analysis
+
+Modifications to the original DreamerV2 codebase in order to make the separated world model have been made.(Theo Michel 2023/03/01)
+
+### World Model extraction
+
+
+The world model extraction is not elegant and can be improved, it was left as is, as it is not a commun operation, you need to follow the following steps:
+
+1. Train a DreamerV2 agent on the environment of your choice (e.g. Atari-Pong), it's latest state will be automatically saved in the mlflow server, so in the file mlruns/0/{run_id}/artifacts/checkpoints/latest.pt"
+
+2. Extract a state of this agent when playing on the environment in question, in our case we captured the state $z$. This is done by uncommenting the code line 136 of the pydreamer/models/dreamer.py. Exercute the evaluation of the model using the model-experiments.ipynb file. And then comment the line, and restart the kernel of the model-experiments.ipynb file.
+
+
+
+3. Use the saved checkpoint and saved state, together to predict the world model, see model-experiments.ipynb
+
+4. Play with the states and analyse the differences.
+
+
+
+
+### World Model analysis

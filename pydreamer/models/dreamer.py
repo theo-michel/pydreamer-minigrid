@@ -137,7 +137,6 @@ class Dreamer(nn.Module):
         # Forward (world model)
         # generate random number
         # rand = random.randint(0, 50)# It will probably overide a bunch of times but that's ok
-        ########## THE STATE IS SHIT WHEN UNTRAINED ? 
         # with open(f'states/obs_alien_new{rand}.pkl', 'wb') as f:
         #     pickle.dump(obs, f)
         # with open(f'states/in_state_alien_new{rand}.pkl', 'wb') as f:
